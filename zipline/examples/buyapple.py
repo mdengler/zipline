@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib.pyplot as plt
 
 from zipline.algorithm import TradingAlgorithm
 from zipline.utils.factory import load_from_yahoo
@@ -29,8 +28,23 @@ class BuyApple(TradingAlgorithm):  # inherit from TradingAlgorithm
 
 
 if __name__ == '__main__':
+
+    import os
+    headless = "DISPLAY" not in os.environ
+    if headless:
+        import matplotlib
+        matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+
     data = load_from_yahoo(stocks=['AAPL'], indexes={})
     simple_algo = BuyApple()
     results = simple_algo.run(data)
     results.portfolio_value.plot()
-    plt.show()
+
+
+    if headless:
+        plt.show()
+    else:
+        plt.savefig("buyapple.png")
+
