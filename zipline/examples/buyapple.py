@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib.pyplot as plt
 from datetime import datetime
 import pytz
 
@@ -31,6 +30,15 @@ class BuyApple(TradingAlgorithm):  # inherit from TradingAlgorithm
 
 
 if __name__ == '__main__':
+
+    import os
+    headless = "DISPLAY" not in os.environ
+    if headless:
+        import matplotlib
+        matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+
     start = datetime(2008, 1, 1, 0, 0, 0, 0, pytz.utc)
     end = datetime(2010, 1, 1, 0, 0, 0, 0, pytz.utc)
     data = load_from_yahoo(stocks=['AAPL'], indexes={}, start=start,
@@ -43,3 +51,8 @@ if __name__ == '__main__':
     ax2 = plt.subplot(212, sharex=ax1)
     data.AAPL.plot(ax=ax2)
     plt.gcf().set_size_inches(18, 8)
+
+    if headless:
+        plt.show()
+    else:
+        plt.savefig("buyapple.png")
