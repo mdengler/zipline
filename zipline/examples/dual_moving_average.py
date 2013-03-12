@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib.pyplot as plt
-
 from zipline.algorithm import TradingAlgorithm
 from zipline.transforms import MovingAverage
 from zipline.utils.factory import load_from_yahoo
@@ -63,6 +61,14 @@ class DualMovingAverage(TradingAlgorithm):
                     sell=self.sell)
 
 if __name__ == '__main__':
+
+    import os
+    headless = "DISPLAY" not in os.environ
+    if headless:
+        import matplotlib
+        matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     data = load_from_yahoo(stocks=['AAPL'], indexes={})
     dma = DualMovingAverage()
     results = dma.run(data)
@@ -80,4 +86,9 @@ if __name__ == '__main__':
     ax2.plot(results.ix[results.sell].index, results.short_mavg[results.sell],
              'v', markersize=10, color='k')
     plt.legend(loc=0)
-    plt.show()
+
+
+    if headless:
+        plt.show()
+    else:
+        plt.savefig("buyapple.png")
