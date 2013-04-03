@@ -94,19 +94,25 @@ def load_option_prices(option_symbol):
     return panel
 
 
+
 class SNS(TradingAlgorithm):
 
-    def initialize(self):
+    def initialize(self, underlyings=None):
         self.params = dict()
-        self.underlyings = UNDERLYINGS
+        self.underlyings = underlyings or ["AAPL"]
         for underlying in self.underlyings:
-            self.params[underlying] = {}
+            self.params[underlying] = dict(
+                "invested_call": False,
+                "invested_put": False,
+                )
 
     def handle_data(self, data):
         for underlying in self.underlyings:
-            if not invested:
+            invested = (self.params[underlying]["invested_call"],
+                        self.params[underlying]["invested_put"])
+            if not all(invested):
                 self.get_involved(underlying, data[underlying].price)
-            else:
+            if any(invested):
                 self.get_out_if_needed(underlying, data[underlying].price)
 
     def get_involved(self, underlying, S_t):
@@ -120,29 +126,42 @@ class SNS(TradingAlgorithm):
         call = option_symbol(underlying, expiry, "C", K_u)
         put = option_symbol(underlying, expiry, "P", K_p)
 
-        self.params[underlying]["K_c"] = K_c
-        self.params[underlying]["K_u"] = K_u
-        self.params[underlying]["K_p"] = K_p
-        self.params[underlying]["eps"] = 0.5 * sigma
+        params = self.params[underlying]
 
-        self.params[underlying]["call"] = call
-        self.params[underlying]["put"] = put
+        params["K_c"] = K_c
+        params["K_u"] = K_u
+        params["K_p"] = K_p
+        params["eps"] = 0.5 * sigma
+
+        params["call"] = call
+        params["put"] = put
+
+        if not params["invested_call"]:
+            params["invested_call"] = True
+            self.order(call, -1)
+
+        if not params["invested_put"]:
+            params["invested_put"] = True
+            self.order(put, -1)
 
     def get_out_if_needed(self, underlying, S_t):
-        K_u = self.params[underlying]["K_u"]
-        K_p = self.params[underlying]["K_p"]
-        eps = self.params[underlying]["eps"]
-        call = self.params[underlying]["call"]
-        put = self.params[underlying]["put"]
+        params = self.params[underlying]
 
-        if S_t > (K_u - eps):
+        K_u = params["K_u"]
+        K_p = params["K_p"]
+
+        eps = params["eps"]
+
+        call = params["call"]
+        put = params["put"]
+
+        if S_t > (K_u - eps) and params["invested_call"]:
             self.order(call, 1)
+            params["invested_call"] = False
 
-        if S_t < (K_p + eps):
+        if S_t < (K_p + eps) and params["invested_put"]:
             self.order(put, 1)
-
-
-
+            params["invested_put"] = False
 
 
 
@@ -157,7 +176,7 @@ if __name__ == '__main__':
 
 
     data = load_from_yahoo(stocks=underlyings, indexes={})
-    sns_algo = SNS()
+    sns_algo = SNS(underlyings=underlyings)
     results = sns_algo.run(data)
     results.portfolio_value.plot()
 
