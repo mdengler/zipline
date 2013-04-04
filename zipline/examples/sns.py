@@ -101,10 +101,10 @@ class SNS(TradingAlgorithm):
         self.params = dict()
         self.underlyings = underlyings or ["AAPL"]
         for underlying in self.underlyings:
-            self.params[underlying] = dict(
-                "invested_call": False,
-                "invested_put": False,
-                )
+            self.params[underlying] = dict((
+                ("invested_call", False),
+                ("invested_put", False),
+                ))
 
     def handle_data(self, data):
         for underlying in self.underlyings:
@@ -174,7 +174,7 @@ if __name__ == '__main__':
         matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-
+    underlyings = ['AAPL']
     data = load_from_yahoo(stocks=underlyings, indexes={})
     sns_algo = SNS(underlyings=underlyings)
     results = sns_algo.run(data)
