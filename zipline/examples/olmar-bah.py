@@ -4,6 +4,7 @@ import numpy as np
 
 import collections
 import datetime
+import functools
 import pytz
 
 import pandas
@@ -17,19 +18,39 @@ import zipline.utils.factory
 
 
 
-UNDERLYINGS = ['AMD', 'CERN', 'COST', 'DELL', 'GPS', 'INTC', 'MMM']
+INSTRUMENTS = ['AMD', 'CERN', 'COST', 'DELL', 'GPS', 'INTC', 'MMM']
 
 
 def sid(sid_int):
     return str(sid_int)
 
 
-def batch_transform(*args, **kwargs):
-    def create_window(func):
-        # passes the user defined function to BatchTransform which it
-        # will call instead of self.get_value()
-        return zipline.transforms.BatchTransform(*args, func=func, **kwargs)
-    return create_window
+def batch_transform(**kwargs_p):
+    """wraps batch_transform from zipline.transforms like in
+    quantopian
+    """
+    def batch_transform_zipline(func):
+        """Decorator function to use instead of inheriting from BatchTransform.
+        For an example on how to use this, see the doc string of BatchTransform.
+        """
+
+        @functools.wraps(func)
+        def create_window(*args, **kwargs):
+            # passes the user defined function to BatchTransform which it
+            # will call instead of self.get_value()
+
+            def partial_func(func):
+                return func(*args)
+
+            kwargs_w = dict(kwargs_p)
+            kwargs_w.update(kwargs)
+            print func, len(args), kwargs_w
+            return zipline.transforms.BatchTransform(func=partial_func(func),
+                                                     **kwargs_w)
+
+        return create_window
+
+    return batch_transform_zipline
 
 
 class OLMARBAH(zipline.algorithm.TradingAlgorithm):
@@ -70,8 +91,8 @@ class OLMARBAH(zipline.algorithm.TradingAlgorithm):
     def handle_data(context, data):
 
         # get data
-        d = context.get_data(data,context.stocks)
-        if d == None:
+        d = context.__class__.get_data(data, context.stocks)
+        if d is None:
            return
 
         prices = d[0]
@@ -149,10 +170,10 @@ class OLMARBAH(zipline.algorithm.TradingAlgorithm):
 
         return b_norm
 
-    # set globals refresh_period_days & window_sizes above
+    @classmethod
     @batch_transform(refresh_period=refresh_period_days,
                      window_length=max(window_sizes))
-    def get_data(context, datapanel, sids):
+    def get_data(cls, datapanel, sids):
         p = datapanel['price'].as_matrix(sids)
         v = datapanel['volume'].as_matrix(sids)
         return [p,v]
@@ -227,8 +248,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     algo_name = "olmar-bah"
-    underlyings = UNDERLYINGS
-    data = zipline.utils.factory.load_from_yahoo(stocks=underlyings,
+    data = zipline.utils.factory.load_from_yahoo(stocks=INSTRUMENTS,
                                                  indexes={})
     algo = OLMARBAH()
     results = algo.run(data)
