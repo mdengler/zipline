@@ -9,38 +9,68 @@ import pytz
 import pandas
 import pandas.io.data
 
-from zipline.algorithm import TradingAlgorithm
-from zipline.utils.factory import load_from_yahoo
+import zipline.algorithm
+import zipline.transforms
+import zipline.finance.slippage
+import zipline.finance.commission
+import zipline.utils.factory
 
 
-class OLMARBAH(TradingAlgorithm):
-    #globals for get_avg batch transform decorator
-    R_P = 1 #refresh period in days
-    W_L = [3,4,5] #Vector of different window size
-    W_MAX = max(W_L) #Max window size
+
+UNDERLYINGS = ['AMD', 'CERN', 'COST', 'DELL', 'GPS', 'INTC', 'MMM']
+
+
+def sid(sid_int):
+    return str(sid_int)
+
+
+def batch_transform(*args, **kwargs):
+    def create_window(func):
+        # passes the user defined function to BatchTransform which it
+        # will call instead of self.get_value()
+        return zipline.transforms.BatchTransform(*args, func=func, **kwargs)
+    return create_window
+
+
+class OLMARBAH(zipline.algorithm.TradingAlgorithm):
+    refresh_period_days = 1
+    window_sizes = (3,4,5)
 
     def initialize(context):
-        #['AMD', 'CERN', 'COST', 'DELL', 'GPS', 'INTC', 'MMM']
-        context.stocks = [sid(351), sid(1419), sid(1787), sid(25317), sid(3321), sid(3951), sid(4922)]
+        context.stocks = [sid(351),
+                          sid(1419),
+                          sid(1787),
+                          sid(25317),
+                          sid(3321),
+                          sid(3951),
+                          sid(4922)]
+
+        context.window_sizes = context.__class__.window_sizes
+        context.window_size_max = max(context.window_sizes)
 
         context.m = len(context.stocks) #Number of stocks in portfolio
-        context.w = len(W_L) #Number of window sizes
+        context.w = len(context.window_sizes) #Number of window sizes
 
         context.b_t = np.ones(context.m) / context.m #Initial b_t vector
         context.eps = 1.00  #change epsilon here
 
-        context.b_w = np.ones((context.m,context.w)) / context.m #Matrix of different b_t for each window size
+        #Matrix of different b_t for each window size
+        context.b_w = np.ones((context.m,context.w)) / context.m
         context.s_w = np.ones(context.w) #Vector of cum. returns from each window size
 
         context.init = False
         context.comPerTrade = 0
-        set_slippage(slippage.VolumeShareSlippage(volume_limit=0.25,price_impact=0))
-        set_commission(commission.PerShare(cost=0.00))
+
+        slippage_model = zipline.finance.slippage.VolumeShareSlippage(
+            volume_limit=0.25,
+            price_impact=0)
+        context.set_slippage(slippage_model)
+        context.set_commission(zipline.finance.commission.PerShare(cost=0.00))
 
     def handle_data(context, data):
 
         # get data
-        d = get_data(data,context.stocks)
+        d = context.get_data(data,context.stocks)
         if d == None:
            return
 
@@ -57,11 +87,13 @@ class OLMARBAH(TradingAlgorithm):
         b_optimal = np.zeros(m) #b_vector
 
         #For each window, we calculate the optimal b_norm
-        for k, w in enumerate(W_L):
+        for k, w in enumerate(contex.window_sizes):
             #Caluclate predicted x for that window size
             for i, stock in enumerate(context.stocks):
                 #Predicted ratio of price change from t to t+1
-                x_tilde_a[i] = np.mean(prices[W_MAX-w:,i])/prices[W_MAX-1,i]
+                x_tilde_a[i] = (np.mean(prices[context.window_size_max-w:,i])
+                                /
+                                prices[context.window_size_max-1,i])
 
             #Update the b_w matrix
             context.b_w[:,k] = find_b_norm(context,x_tilde_a,context.b_w[:,k])
@@ -73,7 +105,7 @@ class OLMARBAH(TradingAlgorithm):
         #Ratio of price change (1 x m) vector from t-1 to t
         x_t = np.true_divide(p_t,p_y)
 
-        #w is length of W_L
+        #w is length of window_sizes
         #Daily returns (1 x w) vector
         s_d = np.dot(x_t,context.b_w)
 
@@ -117,9 +149,10 @@ class OLMARBAH(TradingAlgorithm):
 
         return b_norm
 
-    # set globals R_P & W_L above
-    @batch_transform(refresh_period=R_P, window_length=W_MAX)
-    def get_data(datapanel,sids):
+    # set globals refresh_period_days & window_sizes above
+    @batch_transform(refresh_period=refresh_period_days,
+                     window_length=max(window_sizes))
+    def get_data(context, datapanel, sids):
         p = datapanel['price'].as_matrix(sids)
         v = datapanel['volume'].as_matrix(sids)
         return [p,v]
@@ -194,9 +227,9 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     algo_name = "olmar-bah"
-    throwaway_algo = OLMARBAH().intialize()
-    underlyings = throwaway_algo.stocks
-    data = load_from_yahoo(stocks=underlyings, indexes={})
+    underlyings = UNDERLYINGS
+    data = zipline.utils.factory.load_from_yahoo(stocks=underlyings,
+                                                 indexes={})
     algo = OLMARBAH()
     results = algo.run(data)
     results.portfolio_value.plot()
