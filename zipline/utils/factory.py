@@ -17,6 +17,10 @@
 """
 Factory functions to prepare useful data.
 """
+
+import os
+import pickle
+
 import pytz
 import random
 from collections import OrderedDict
@@ -372,7 +376,7 @@ def create_test_panel_ohlc_source(sim_params=None):
     return DataPanelSource(panel), panel
 
 
-def _load_raw_yahoo_data(indexes=None, stocks=None, start=None, end=None):
+def _load_raw_yahoo_data(indexes=None, stocks=None, start=None, end=None, cache=False):
     """Load closing prices from yahoo finance.
 
     :Optional:
@@ -402,15 +406,21 @@ must specify stocks or indexes"""
 
     data = OrderedDict()
 
+    def _cache_fullpath(ticker):
+        return os.path.expanduser("~/.cache/zipline/%s.pickled" % ticker)
+
     if stocks is not None:
         for stock in stocks:
-            print stock
-            stkd = DataReader(stock, 'yahoo', start, end).sort_index()
+            cache_file = _cache_fullpath(stock)
+            if cache and os.path.exists(cache_file):
+                stkd = pickle.load(open(cache_file))
+            else:
+                stkd = DataReader(stock, 'yahoo', start, end).sort_index()
+                pickle.dump(stkd, open(cache_file, "w"))
             data[stock] = stkd
 
     if indexes is not None:
         for name, ticker in indexes.iteritems():
-            print name
             stkd = DataReader(ticker, 'yahoo', start, end).sort_index()
             data[name] = stkd
 
@@ -421,7 +431,8 @@ def load_from_yahoo(indexes=None,
                     stocks=None,
                     start=None,
                     end=None,
-                    adjusted=True):
+                    adjusted=True,
+                    cache=False):
     """
     Loads price data from Yahoo into a dataframe for each of the indicated
     securities.  By default, 'price' is taken from Yahoo's 'Adjusted Close',
@@ -442,7 +453,7 @@ def load_from_yahoo(indexes=None,
             Adjust the price for splits and dividends.
 
     """
-    data = _load_raw_yahoo_data(indexes, stocks, start, end)
+    data = _load_raw_yahoo_data(indexes, stocks, start, end, cache=cache)
     if adjusted:
         close_key = 'Adj Close'
     else:
