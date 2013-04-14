@@ -249,7 +249,8 @@ if __name__ == '__main__':
 
     algo_name = "olmar-bah"
     data = zipline.utils.factory.load_from_yahoo(stocks=INSTRUMENTS,
-                                                 indexes={})
+                                                 indexes={},
+                                                 cache=True)
     algo = OLMARBAH()
     results = algo.run(data)
     results.portfolio_value.plot()
