@@ -411,6 +411,7 @@ must specify stocks or indexes"""
 
     if stocks is not None:
         for stock in stocks:
+            print stock
             cache_file = _cache_fullpath(stock)
             if cache and os.path.exists(cache_file):
                 stkd = pickle.load(open(cache_file))
@@ -421,6 +422,7 @@ must specify stocks or indexes"""
 
     if indexes is not None:
         for name, ticker in indexes.iteritems():
+            print name
             stkd = DataReader(ticker, 'yahoo', start, end).sort_index()
             data[name] = stkd
 
@@ -467,7 +469,8 @@ def load_bars_from_yahoo(indexes=None,
                          stocks=None,
                          start=None,
                          end=None,
-                         adjusted=True):
+                         adjusted=True,
+                         cache=False):
     """
     Loads data from Yahoo into a panel with the following
     column names for each indicated security:
@@ -497,7 +500,7 @@ def load_bars_from_yahoo(indexes=None,
             field is always adjusted.
 
     """
-    data = _load_raw_yahoo_data(indexes, stocks, start, end)
+    data = _load_raw_yahoo_data(indexes, stocks, start, end, cache=cache)
     panel = pd.Panel(data)
     # Rename columns
     panel.minor_axis = ['open', 'high', 'low', 'close', 'volume', 'price']
