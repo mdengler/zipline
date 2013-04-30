@@ -55,7 +55,12 @@ class DataSource(with_metaclass(ABCMeta)):
     @property
     def mapped_data(self):
         for row in self.raw_data:
-            yield Event(self.apply_mapping(row))
+            try:
+                yield Event(self.apply_mapping(row))
+            except Exception, msg:
+                print "error in mapping row %s" % row
+                # TODO: handle this gracefully; DataPanel should have already does this for us
+                #raise
 
     def __iter__(self):
         return self
