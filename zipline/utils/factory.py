@@ -414,7 +414,9 @@ must specify stocks or indexes"""
             print stock
             cache_file = _cache_fullpath(stock)
             if cache and os.path.exists(cache_file):
+                print "loading  %s from cache %s" % (stock, cache_file)
                 stkd = pickle.load(open(cache_file))
+                print type(stkd)
             else:
                 stkd = DataReader(stock, 'yahoo', start, end).sort_index()
                 pickle.dump(stkd, open(cache_file, "w"))
