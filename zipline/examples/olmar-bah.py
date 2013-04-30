@@ -18,7 +18,14 @@ import zipline.utils.factory
 
 
 
-INSTRUMENTS = ['AMD', 'CERN', 'COST', 'DELL', 'GPS', 'INTC', 'MMM']
+INSTRUMENTS = {'AMD': 351,
+               'CERN': 1419,
+               'COST': 1787,
+               'DELL': 25317,
+               'GPS': 3321,
+               'INTC': 3951,
+               'MMM': 4922,
+               }
 
 
 def sid(sid_int):
@@ -58,13 +65,7 @@ class OLMARBAH(zipline.algorithm.TradingAlgorithm):
     window_sizes = (3,4,5)
 
     def initialize(context):
-        context.stocks = [sid(351),
-                          sid(1419),
-                          sid(1787),
-                          sid(25317),
-                          sid(3321),
-                          sid(3951),
-                          sid(4922)]
+        context.stocks = INSTRUMENTS.values()
 
         context.window_sizes = context.__class__.window_sizes
         context.window_size_max = max(context.window_sizes)
@@ -248,11 +249,11 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     algo_name = "olmar-bah"
-    data = zipline.utils.factory.load_from_yahoo(stocks=INSTRUMENTS,
-                                                 indexes={},
-                                                 cache=True)
+    bars = zipline.utils.factory.load_bars_from_yahoo(stocks=INSTRUMENTS.keys(),
+                                                      indexes={},
+                                                      cache=True)
     algo = OLMARBAH()
-    results = algo.run(data)
+    results = algo.run(bars)
     results.portfolio_value.plot()
 
 
