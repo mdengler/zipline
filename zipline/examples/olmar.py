@@ -152,7 +152,14 @@ def simplex_projection(v, b=1):
     return w
 
 if __name__ == '__main__':
+
+    import os
+    headless = "DISPLAY" not in os.environ or os.environ["DISPLAY"] == ""
+    if headless:
+        import matplotlib
+        matplotlib.use("Agg")
     import pylab as pl
+
     start = datetime(2004, 1, 1, 0, 0, 0, 0, pytz.utc)
     end = datetime(2008, 1, 1, 0, 0, 0, 0, pytz.utc)
     data = load_from_yahoo(stocks=STOCKS, indexes={}, start=start,
@@ -161,4 +168,9 @@ if __name__ == '__main__':
     olmar = OLMAR()
     results = olmar.run(data)
     results.portfolio_value.plot()
-    pl.show()
+
+    if headless:
+        pl.savefig("olmar.png")
+    else:
+        pl.show()
+
