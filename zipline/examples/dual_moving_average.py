@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib.pyplot as plt
-
 from zipline.algorithm import TradingAlgorithm
 from zipline.finance import trading
 from zipline.transforms import MovingAverage
@@ -67,8 +65,17 @@ class DualMovingAverage(TradingAlgorithm):
                     sell=self.sell)
 
 if __name__ == '__main__':
+
+    import os
+    headless = "DISPLAY" not in os.environ or os.environ["DISPLAY"] == ""
+    if headless:
+        import matplotlib
+        matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     start = datetime(2002, 1, 1, 0, 0, 0, 0, pytz.utc)
     end = datetime(2003, 1, 1, 0, 0, 0, 0, pytz.utc)
+
     data = load_from_yahoo(stocks=['AAPL'], indexes={}, start=start,
                            end=end)
 
@@ -98,3 +105,9 @@ if __name__ == '__main__':
     sharpe = [risk['sharpe'] for risk in dma.risk_report['one_month']]
     print("Monthly Sharpe ratios: {0}".format(sharpe))
     plt.gcf().set_size_inches(18, 8)
+
+    if headless:
+        plt.show()
+    else:
+        plt.savefig("dual_moving_average.png")
+

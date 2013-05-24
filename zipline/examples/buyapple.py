@@ -35,7 +35,7 @@ class BuyApple(TradingAlgorithm):  # inherit from TradingAlgorithm
 if __name__ == '__main__':
 
     import os
-    headless = "DISPLAY" not in os.environ
+    headless = "DISPLAY" not in os.environ or os.environ["DISPLAY"] == ""
     if headless:
         import matplotlib
         matplotlib.use("Agg")
