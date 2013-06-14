@@ -41,3 +41,31 @@ Most of the profit comes from selling the contangoed contracts - what does that 
 Contango is when the futures price is above the expected future spot price. Because the futures price must converge on the expected future spot price, contango implies that futures prices are falling over time as new information brings them into line with the expected future spot price.
 
 Normal backwardation is when the futures price is below the expected future spot price. This is desirable for speculators who are "net long" in their positions: they want the futures price to increase. So, normal backwardation is when the futures prices are increasing.
+
+
+
+ADHD
+----
+
+Stocks with the strongest prior 12-month returns experience a
+significant average market-adjusted return of 1.58 percent during the
+five trading days before their earnings announcements and a
+significant average market-adjusted return of 1.86 percent in the five
+trading days afterward.
+
+
+
+Cheapskate
+----------
+
+Buy top decile of stocks with lowest price-to-book
+Rebalance monthly
+
+
+
+Beat the shorts
+---------------
+
+Overweight the S&P500 sectors with the highest short interest (as a
+percentage of shares outstanding) vs those with the lowest short
+interest.
