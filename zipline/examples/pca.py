@@ -5,19 +5,22 @@ PCA momentum from http://dspace.mit.edu/bitstream/handle/1721.1/59122/658860705.
 
 general idea: combine a PCA-momentum signal with a regime change signal
 
-PCA of about 5 components on log returns
+PCA of about 5 components on log returns, transformed into a signal
+that is then traded to, or traded against, depending on the value of a
+regime signal, the "Cross-Sectional Volatility of the Principal
+Components" (CSVPC).
 
 PCA
 ---
 
 calculate log returns use mids of bars (X)
-calculate de-meaned log returns (Y = X - M)
+calculate de-meaned (aka centered) log returns (Y = X - M)
 calculate PCA feature matrix (phi)
 calculate dimensionality reduction of the de-meaned log returns (D = phi * Y)
 
 
-Predictions
------------
+Signal (Predictions based on PCA)
+---------------------------------
 
 forecast an H-period series of log returns (somehow?!) (aka log-horizon regression)
 calculate OLS regression of the forecast with the dimensionally-reduced log return PCA (B = OLS of r_t+1 + ... r_t+H = b_1 Sum_i=0_to_H of D_t-i,1 + ... b_k Sum_i=0_to_H of D_t-i,k + n_t+H,H)
@@ -25,14 +28,24 @@ calculate de-meaned signal (S = D^_t * B, D^_t = Sum_i=0_to_H-1 of D_t-i)
 calculate the signal (S^ = S + M_t)
 
 
-Signal usage
-------------
+PCA Signal usage
+----------------
 
 If we see that the last H-period accumulated log-returns have been
 higher than the signal, we assume that the stock is overvalued and
 sell it; otherwise, we buy it.
 
 
+Regime signal
+-------------
+
+calculate the volatility (standard deviation) of the dimensionally-reduced log returns ( s_D(t) = sqrt( Sum_j=1_to_k of (d_tj - dbar_t)^2 / (k-1) ) )
+
+
+
+
+PCA can be done simply with
+https://code.google.com/p/trading-with-python/source/browse/trunk/lib/functions.py
 
 """
 
@@ -52,6 +65,38 @@ import zipline.transforms
 import zipline.finance.slippage
 import zipline.finance.commission
 import zipline.utils.factory
+
+
+
+def pca(A):
+    """ performs principal components analysis (PCA) on the n-by-p
+    DataFrame A
+
+    Rows of A correspond to observations, columns to variables.
+
+    Returns :
+     coeff : principal components, column-wise
+     transform: A in principal component space
+     latent :  eigenvalues
+
+    From: https://code.google.com/p/trading-with-python/source/browse/trunk/lib/functions.py
+
+    """
+    # computing eigenvalues and eigenvectors of covariance matrix
+    M = (A - A.mean()).T # subtract the mean (along columns)
+    [latent,coeff] = np.linalg.eig(np.cov(M)) # attention:not always sorted
+
+    idx = np.argsort(latent) # sort eigenvalues
+    idx = idx[::-1] # in ascending order
+
+    coeff = coeff[:,idx]
+    latent = latent[idx]
+
+    score = np.dot(coeff.T,A.T) # projection of the data in the new space
+
+    transform = DataFrame(index = A.index, data = score.T)
+
+    return coeff,transform,latent
 
 
 
