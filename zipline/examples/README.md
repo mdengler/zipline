@@ -69,3 +69,14 @@ Beat the shorts
 Overweight the S&P500 sectors with the highest short interest (as a
 percentage of shares outstanding) vs those with the lowest short
 interest.
+
+
+
+
+META
+====
+
+http://seekingalpha.com/article/1029911-spxl-the-best-way-to-short-the-market
+the single best way to be short is by buying deep in-the-money put options on the Direxion Daily S&P 500 Bull 3x Shares (SPXL).
+
+you should short a leveraged long fund rather than buy a leveraged short fund when you want to short the broader market. In other words, short SPXL rather than buy SPXS.
