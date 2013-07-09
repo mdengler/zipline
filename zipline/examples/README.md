@@ -1,4 +1,5 @@
 Algos for testing out
+=====================
 
 
 Trend-following overlay and momentum regime change signal
@@ -72,7 +73,6 @@ interest.
 
 
 
-
 META
 ====
 
@@ -80,3 +80,24 @@ http://seekingalpha.com/article/1029911-spxl-the-best-way-to-short-the-market
 the single best way to be short is by buying deep in-the-money put options on the Direxion Daily S&P 500 Bull 3x Shares (SPXL).
 
 you should short a leveraged long fund rather than buy a leveraged short fund when you want to short the broader market. In other words, short SPXL rather than buy SPXS.
+
+
+Measurement
+===========
+
+it will be nice to provide sample to calculate MFE / MAE / BSO of each
+trade using Zipline
+
+MAE - Maximum Adverse Excursion is the maximum draw down the trade had
+before the trade was closed.
+
+MFE - Maximum Favorable Excursion is the maximum paper profit the
+trade had before the trade was closed.
+
+BSO: Best Scale Out. The closer your BSO is to the MFE, the better and
+more efficient your Exit strategy is… basically, not leaving too much
+money on the table.
+
+http://trading-journal-spreadsheet.com/faqs/mfe-mae-bso/
+http://www.traderslaboratory.com/forums/trading-markets/6049-looking-beyong-pnl-mae-mfe.html
+
